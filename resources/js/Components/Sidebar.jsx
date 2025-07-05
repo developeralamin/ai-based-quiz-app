@@ -28,7 +28,7 @@ const navLinks = [
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
 
-export default function Sidebar({ user }) {
+export default function Sidebar({ user, onNavClick }) {
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(null);
   const page = usePage();
@@ -36,6 +36,12 @@ export default function Sidebar({ user }) {
 
   const handleLogout = () => {
     router.post('/logout');
+  };
+
+  const handleNavClick = () => {
+    if (onNavClick) {
+      onNavClick();
+    }
   };
 
   return (
@@ -81,6 +87,7 @@ export default function Sidebar({ user }) {
               href={link.href}
               onMouseEnter={() => setHovered(idx)}
               onMouseLeave={() => setHovered(null)}
+              onClick={handleNavClick}
               className={`flex items-center gap-4 px-2 py-2 my-1 rounded transition-all duration-200 cursor-pointer
                 ${expanded ? 'px-4' : 'justify-center'}
                 ${isActive || isHovered ? 'bg-purple-700 text-white' : 'text-purple-700 hover:bg-purple-100'}

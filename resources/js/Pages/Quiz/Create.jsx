@@ -1,5 +1,5 @@
-import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head, useForm } from "@inertiajs/react";
+import QuizLayout from '@/Layouts/QuizLayout';
+import { useForm } from "@inertiajs/react";
 import { useState } from "react";
 
 export default function Create() {
@@ -31,9 +31,7 @@ export default function Create() {
         });
     }
     return (
-        <DashboardLayout>
-            <Head title="Quiz" />
-
+        <QuizLayout>
             <div className="py-6">
                 <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
                     <h2 className="text-2xl font-bold mb-6 text-gray-800">AI Quiz Generator</h2>
@@ -79,6 +77,6 @@ export default function Create() {
                     </form>
                 </div>
             </div>
-        </DashboardLayout>
+        </QuizLayout>
     );
 }

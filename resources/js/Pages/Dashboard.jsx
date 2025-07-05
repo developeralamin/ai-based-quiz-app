@@ -1,9 +1,9 @@
-import DashboardLayout from '@/Layouts/DashboardLayout';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
 export default function Dashboard() {
     return (
-        <DashboardLayout>
+        <AuthenticatedLayout>
             <Head title="Dashboard" />
             {/* Filter Section */}
             <div className="flex flex-wrap gap-4 mb-8 items-center">
@@ -43,6 +43,6 @@ export default function Dashboard() {
                     <div className="text-gray-400">There are no books available at the moment.</div>
                 </div>
             </div>
-        </DashboardLayout>
+        </AuthenticatedLayout>
     );
 }

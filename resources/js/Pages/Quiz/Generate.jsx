@@ -1,4 +1,4 @@
-import DashboardLayout from '@/Layouts/DashboardLayout';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -67,7 +67,7 @@ export default function Generate() {
     };
 
     return (
-        <DashboardLayout>
+        <AuthenticatedLayout>
             <Head title="Quiz Results" />
             <div className="py-6">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -200,6 +200,6 @@ export default function Generate() {
                     </div>
                 </div>
             </div>
-        </DashboardLayout>
+        </AuthenticatedLayout>
     );
 }
