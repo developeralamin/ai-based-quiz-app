@@ -1,4 +1,4 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, useForm } from "@inertiajs/react";
 import { useState } from "react";
 
@@ -31,21 +31,15 @@ export default function Create() {
         });
     }
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Quiz QUIZ
-                </h2>
-            }
-        >
+        <DashboardLayout>
             <Head title="Quiz" />
 
             <div className="py-6">
                 <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
-                    <h2 className="text-xl font-bold mb-4">AI Quiz Generator</h2>
+                    <h2 className="text-2xl font-bold mb-6 text-gray-800">AI Quiz Generator</h2>
                     <form onSubmit={handleSubmit}>
                         <div className="mb-4">
-                            <label className="block text-gray-700">Description</label>
+                            <label className="block text-gray-700 font-medium mb-2">Description</label>
                             <textarea
                                 value={data.text}
                                 onChange={(e) => {
@@ -54,37 +48,37 @@ export default function Create() {
                                         setLocalErrors({ text: "" }); 
                                     }
                                 }}
-                                className="w-full border p-2 rounded-md resize-none h-40"
+                                className="w-full border border-gray-300 p-3 rounded-md resize-none h-40 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 placeholder="Enter text for quiz generation..."
                             />
-                            {localErrors.text && <p className="text-red-500">{localErrors.text}</p>}
+                            {localErrors.text && <p className="text-red-500 text-sm mt-1">{localErrors.text}</p>}
                         </div>
 
-                        <div className="mb-4">
-                            <label className="block text-gray-700">Number of Questions</label>
+                        <div className="mb-6">
+                            <label className="block text-gray-700 font-medium mb-2">Number of Questions</label>
                             <select
                                 value={data.num_question}
                                 onChange={(e) => setData("num_question", e.target.value)}
-                                className="w-full border p-2 rounded-md"
+                                className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             >
                                 <option value="">Select number</option>
                                 {[1, 2, 3, 4, 5].map((num) => (
                                     <option key={num} value={num}>{num}</option>
                                 ))}
                             </select>
-                            {errors.num_question && <p className="text-red-500">{errors.num_question}</p>}
+                            {errors.num_question && <p className="text-red-500 text-sm mt-1">{errors.num_question}</p>}
                         </div>
 
                         <button
                             type="submit"
                             disabled={processing}
-                            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                            className="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {processing ? "Generating..." : "Generate"}
+                            {processing ? "Generating..." : "Generate Quiz"}
                         </button>
                     </form>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </DashboardLayout>
     );
 }

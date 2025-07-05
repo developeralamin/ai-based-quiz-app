@@ -1,4 +1,4 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -67,38 +67,41 @@ export default function Generate() {
     };
 
     return (
-        <AuthenticatedLayout>
-            <Head title="Generate Quiz" />
-            <div className="py-12">
+        <DashboardLayout>
+            <Head title="Quiz Results" />
+            <div className="py-6">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     {error && (
-                        // <Alert variant="destructive" className="mb-4">
-                            <div>{error}</div>
-                        // </Alert>
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                            {error}
+                        </div>
                     )}
 
-                    <div className="p-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         {showResults && (
-                            <div className="text-center mb-4">
-                                <h3 className="text-2xl font-bold">Your Score: {score.toFixed(2)}%</h3>
+                            <div className="text-center mb-6 p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
+                                <h3 className="text-3xl font-bold text-purple-800">Your Score: {score.toFixed(2)}%</h3>
+                                <p className="text-purple-600 mt-2">
+                                    {score >= 80 ? 'Excellent!' : score >= 60 ? 'Good job!' : 'Keep practicing!'}
+                                </p>
                             </div>
                         )}
-                        <h2 className="text-2xl font-bold mb-4">Quiz</h2>
+                        <h2 className="text-2xl font-bold mb-6 text-gray-800">Quiz Questions</h2>
                         {quizQuestions.map((question) => (
-                            <div key={question.question_no} className="mb-6 p-4 border rounded">
-                                <p className="font-semibold">
+                            <div key={question.question_no} className="mb-6 p-6 border border-gray-200 rounded-lg bg-gray-50">
+                                <p className="font-semibold text-lg mb-4 text-gray-800">
                                     {question.question_no}. {question.question}
                                 </p>
                                 {question.type === "multiple-choice" && (
-                                <ul>
+                                <ul className="space-y-2">
                                     {question.options.map((option, idx) => (
-                                        <li key={idx} className="mt-2">
+                                        <li key={idx}>
                                             <button
                                                 onClick={() => handleAnswerSelect(question.question_no, option)}
-                                                className={`px-4 py-2 rounded border ${
+                                                className={`w-full text-left px-4 py-3 rounded-lg border transition-all duration-200 ${
                                                     userAnswers[question.question_no] === String.fromCharCode(65 + question.options.indexOf(option))
-                                                        ? 'bg-blue-500 text-white'
-                                                        : 'bg-gray-100'
+                                                        ? 'bg-purple-600 text-white border-purple-600'
+                                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-purple-50 hover:border-purple-300'
                                                 } ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
                                                 disabled={isQuizCompleted}
                                             >
@@ -109,20 +112,20 @@ export default function Generate() {
                                 </ul>
                             )}
                                 {question.type === "true-false" && (
-                                    <ul>
-                                        <li className="mt-2">
+                                    <ul className="space-y-2">
+                                        <li>
                                             <button
                                                 onClick={() => handleAnswerSelect(question.question_no, "True")}
-                                                className={`px-4 py-2 rounded border ${userAnswers[question.question_no] === "True" ? 'bg-blue-500 text-white' : 'bg-gray-100'} ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                className={`w-full text-left px-4 py-3 rounded-lg border transition-all duration-200 ${userAnswers[question.question_no] === "True" ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-purple-50 hover:border-purple-300'} ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
                                                 disabled={isQuizCompleted}
                                             >
                                                 True
                                             </button>
                                         </li>
-                                        <li className="mt-2">
+                                        <li>
                                             <button
                                                 onClick={() => handleAnswerSelect(question.question_no, "False")}
-                                                className={`px-4 py-2 rounded border ${userAnswers[question.question_no] === "False" ? 'bg-blue-500 text-white' : 'bg-gray-100'} ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                className={`w-full text-left px-4 py-3 rounded-lg border transition-all duration-200 ${userAnswers[question.question_no] === "False" ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-purple-50 hover:border-purple-300'} ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
                                                 disabled={isQuizCompleted}
                                             >
                                                 False
@@ -135,8 +138,9 @@ export default function Generate() {
                                         type="text"
                                         value={userAnswers[question.question_no] || ""}
                                         onChange={(e) => handleTextAnswerChange(question.question_no, e.target.value)}
-                                        className={`mt-2 p-2 border rounded w-full ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
+                                        className={`mt-2 p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
                                         disabled={isQuizCompleted}
+                                        placeholder="Enter your answer..."
                                     />
                                 )}
                                 {question.type === "short-answer" && (
@@ -144,49 +148,58 @@ export default function Generate() {
                                         type="text"
                                         value={userAnswers[question.question_no] || ""}
                                         onChange={(e) => handleTextAnswerChange(question.question_no, e.target.value)}
-                                        className={`mt-2 p-2 border rounded w-full ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
+                                        className={`mt-2 p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
                                         disabled={isQuizCompleted}
+                                        placeholder="Enter your answer..."
                                     />
                                 )}
                                 {question.type === "long-answer" && (
                                     <textarea
                                         value={userAnswers[question.question_no] || ""}
                                         onChange={(e) => handleTextAnswerChange(question.question_no, e.target.value)}
-                                        className={`mt-2 p-2 border rounded w-full ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
+                                        className={`mt-2 p-3 border border-gray-300 rounded-lg w-full h-32 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${isQuizCompleted ? 'cursor-not-allowed opacity-50' : ''}`}
                                         disabled={isQuizCompleted}
+                                        placeholder="Enter your detailed answer..."
                                     />
                                 )}
 
                             {showResults && (
-                                <div className="mt-2">
+                                <div className="mt-4 p-4 rounded-lg">
                                     <p
-                                        className={`font-bold ${
+                                        className={`font-bold text-lg ${
                                             userAnswers[question.question_no]?.trim().toLowerCase() === question.answer?.trim().toLowerCase()
                                                 ? 'text-green-600'
                                                 : 'text-red-600'
                                         }`}
                                     >
-                                        Your Answer:
                                         {userAnswers[question.question_no]?.trim().toLowerCase() === question.answer?.trim().toLowerCase()
-                                            ? ' Correct'
-                                            : ' Incorrect'}
+                                            ? '✓ Correct'
+                                            : '✗ Incorrect'}
                                     </p>
                                     {userAnswers[question.question_no]?.trim().toLowerCase() !== question.answer?.trim().toLowerCase() && (
-                                        <p className="text-green-600 font-bold">
-                                            Correct Answer: {question.answer}
-                                        </p>
+                                        <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                            <p className="text-green-800 font-semibold">Correct Answer:</p>
+                                            <p className="text-green-700">{question.answer}</p>
+                                        </div>
                                     )}
                                 </div>
                             )}
                             </div>
                         ))}
 
-                        <button onClick={handleShowResults} className="mt-4" disabled={isQuizCompleted}>
-                            Show Score
-                        </button>
+                        {!isQuizCompleted && (
+                            <div className="text-center mt-8">
+                                <button 
+                                    onClick={handleShowResults} 
+                                    className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200 font-semibold text-lg"
+                                >
+                                    Submit Quiz & Show Results
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </DashboardLayout>
     );
 }
