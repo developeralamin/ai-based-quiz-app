@@ -3,8 +3,8 @@
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
-use App\Http\Controllers\QuizController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QuizController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
