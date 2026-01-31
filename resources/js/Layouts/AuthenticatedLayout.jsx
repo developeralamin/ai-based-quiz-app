@@ -1,9 +1,5 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import Dropdown from '@/Components/Dropdown';
-import NavLink from '@/Components/NavLink';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import Sidebar from '@/Components/Sidebar';
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
@@ -16,28 +12,29 @@ export default function AuthenticatedLayout({ header, children }) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            {/* Top Navigation Bar */}
-            
+        <div className="h-screen bg-gray-100">
+            {/* Page Header (full width so no gap next to sidebar) */}
+            {header && (
+                <header className="bg-white shadow">
+                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                        {header}
+                    </div>
+                </header>
+            )}
 
             {/* Main Content Area with Sidebar */}
-            <div className="flex">
+            <div className="flex h-full">
                 {/* Sidebar */}
-                <div className={`transition-all duration-300 ${sidebarVisible ? 'w-64' : 'w-0'} overflow-hidden`}>
-                    <Sidebar user={user} onNavClick={() => setSidebarVisible(false)} />
+                <div className={`transition-all duration-300 ${sidebarVisible ? 'w-64' : 'w-0'} overflow-hidden h-full flex-shrink-0`}>
+                    <div className="h-full">
+                        <Sidebar user={user} headerExists={!!header} onNavClick={() => setSidebarVisible(false)} />
+                    </div>
                 </div>
 
                 {/* Main Content */}
-                <div className={`flex-1 transition-all duration-300 ${sidebarVisible ? 'ml-0' : 'ml-0'}`}>
-                    {header && (
-                        <header className="bg-white shadow">
-                            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                                {header}
-                            </div>
-                        </header>
-                    )}
+                <div className={`flex-1 transition-all duration-300 ${sidebarVisible ? 'ml-0' : 'ml-0'} flex flex-col h-full overflow-hidden`}>
 
-                    <main className="p-6">{children}</main>
+                    <main className="flex-1 p-6 overflow-y-auto">{children}</main>
                 </div>
             </div>
         </div>
