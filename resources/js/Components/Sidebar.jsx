@@ -1,17 +1,15 @@
 import {
+  ArrowRightOnRectangleIcon,
   BookOpenIcon,
   CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
   ClockIcon,
   Cog6ToothIcon,
-  CreditCardIcon,
   DocumentTextIcon,
-  PencilSquareIcon,
   QuestionMarkCircleIcon,
-  SparklesIcon,
-  ArrowRightOnRectangleIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
-import { Link, usePage, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 const navLinks = [
@@ -28,11 +26,12 @@ const navLinks = [
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
 
-export default function Sidebar({ user, onNavClick }) {
+export default function Sidebar({ user, onNavClick, headerExists = false }) {
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(null);
   const page = usePage();
   const currentUrl = page.url;
+  const topOffsetClass = headerExists ? 'top-28' : 'top-16';
 
   const handleLogout = () => {
     router.post('/logout');
@@ -46,7 +45,7 @@ export default function Sidebar({ user, onNavClick }) {
 
   return (
     <div
-      className={`h-screen flex flex-col shadow-lg transition-all duration-300 ${expanded ? 'w-64' : 'w-16'} bg-white text-gray-900 group`}
+      className={`flex flex-col h-full sticky ${topOffsetClass} shadow-lg transition-all duration-300 ${expanded ? 'w-64' : 'w-16'} bg-white text-gray-900 group z-20`}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => { setExpanded(false); setHovered(null); }}
     >
@@ -77,7 +76,7 @@ export default function Sidebar({ user, onNavClick }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 space-y-1 bg-white overflow-y-auto">
+      <nav className="flex-1 py-4 space-y-1 bg-white overflow-y-auto min-h-0">
         {navLinks.map((link, idx) => {
           const isActive = currentUrl.startsWith(link.href);
           const isHovered = hovered === idx;
@@ -101,7 +100,7 @@ export default function Sidebar({ user, onNavClick }) {
       </nav>
 
       {/* Bottom Section with Logout */}
-      <div className={`px-2 py-3 border-t border-purple-100 transition-all duration-300 ${expanded ? 'px-4' : 'justify-center'} bg-white text-purple-700`}>
+      <div className={`px-2 py-3 border-t border-purple-100 transition-all duration-300 mt-auto ${expanded ? 'px-4' : 'flex items-center justify-center'} bg-white text-purple-700`}>
         <div className="mb-2">
           <a href="#" className={`bg-purple-900 text-xs px-3 py-1 rounded hover:bg-purple-800 transition block text-center text-white ${expanded ? '' : 'hidden'}`}>Your online resume <span className="ml-1">↗</span></a>
         </div>
