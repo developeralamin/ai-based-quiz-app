@@ -83,7 +83,7 @@ export default function WelcomeEducation({ auth, laravelVersion, phpVersion }) {
                                 </Link>
                             ) : (
                                 <>
-                                    <Link href={route('login')} className="rounded-md px-3 py-2 text-sm text-black hover:text-black/70 dark:text-white">
+                                    <Link href={route('login')} className="rounded-md px-3 py-2 text-sm text-black hover:text-[#FF2D20]/70 dark:text-white">
                                         Log in
                                     </Link>
                                     <Link href={route('register')} className="rounded-md px-3 py-2 text-sm bg-[#FF2D20] text-white rounded-lg">
