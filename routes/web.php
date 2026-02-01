@@ -15,7 +15,7 @@ use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\SettingsController;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
+    return Inertia::render('WelcomeEducation', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
