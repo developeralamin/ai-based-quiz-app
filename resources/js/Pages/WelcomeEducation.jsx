@@ -141,7 +141,7 @@ export default function WelcomeEducation({ auth, laravelVersion, phpVersion }) {
                             </div>
 
                             <div className="mt-4 flex items-center justify-between">
-                                <div className="text-sm text-black/70">Instructor: Dr. Gomez</div>
+                                <div className="text-sm text-black/70 dark:text-white/70">Instructor: Dr. Gomez</div>
                                 <Link href="#" className="text-sm text-[#FF2D20]">View →</Link>
                             </div>
                         </aside>
@@ -210,7 +210,7 @@ export default function WelcomeEducation({ auth, laravelVersion, phpVersion }) {
 
                     <footer className="mt-16 border-t pt-6 text-sm text-black/60 dark:text-white/60">
                         <div className="flex items-center justify-between">
-                            <div>Laravel v{laravelVersion} — PHP v{phpVersion}</div>
+                          
                             <div>© {new Date().getFullYear()} EduAI</div>
                         </div>
                     </footer>
