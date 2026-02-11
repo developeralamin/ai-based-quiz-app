@@ -52,11 +52,18 @@ class QuizController extends Controller
             {\"type\": \"long-answer\", \"question\": \"Discuss the implications of the events described in the text.\", \"answer\": \"Provide a detailed explanation.\"}
         ]
         Do not include any extra text outside the JSON array.";
-
+        //Old model
+        // $response = Http::withHeaders(['Content-Type' => 'application/json'])
+        //     ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey", [
+        //         "contents" => [["parts" => [["text" => $prompt]]]]
+        //     ]);
+        //new model
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey", [
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$apiKey", [
                 "contents" => [["parts" => [["text" => $prompt]]]]
             ]);
+
+ 
 
         if ($response->failed()) {
             return Inertia::render('Quiz/Generate', ['error' => 'Gemini API request failed', 'details' => $response->json()]);
