@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
+use App\Models\AIQuiz;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
@@ -27,6 +29,7 @@ class QuizController extends Controller
     {
         $text = $request->input('text');
         $numQuestions = $request->input('num_question');
+        $language = $request->input('language');
 
         // Fetch API key from .env
         $apiKey = env('GEMINI_API_KEY');
@@ -42,7 +45,13 @@ class QuizController extends Controller
 
         // Generate the prompt
         $promptPrefix = !empty($numQuestions) ? "Generate exactly $numQuestions " : "Generate a quiz with ";
-        $prompt = $promptPrefix . "multiple-choice, true/false, fill-in-the-gaps, short answer, and long answer questions based on the following text:\n$text.
+        $languageInstruction = !empty($language)? "All questions and answers must be written in $language language.\n": "";
+        $prompt = $promptPrefix . "
+        multiple-choice, true/false, fill-in-the-gaps, short answer, and long answer questions 
+        based on the following text:\n\n$text\n\n" .
+
+        $languageInstruction .
+         "
         Respond only with a valid JSON array in the following format:
         [
             {\"type\": \"multiple-choice\", \"question\": \"What is the capital of France?\", \"options\": [\"A) Madrid\", \"B) Berlin\", \"C) Paris\", \"D) Rome\"], \"answer\": \"C\"},
@@ -52,13 +61,19 @@ class QuizController extends Controller
             {\"type\": \"long-answer\", \"question\": \"Discuss the implications of the events described in the text.\", \"answer\": \"Provide a detailed explanation.\"}
         ]
         Do not include any extra text outside the JSON array.";
-
+        //Old model
+        // $response = Http::withHeaders(['Content-Type' => 'application/json'])
+        //     ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey", [
+        //         "contents" => [["parts" => [["text" => $prompt]]]]
+        //     ]);
+        //new model
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey", [
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$apiKey", [
                 "contents" => [["parts" => [["text" => $prompt]]]]
             ]);
 
-        if ($response->failed()) {
+ 
+        if($response->failed()) {
             return Inertia::render('Quiz/Generate', ['error' => 'Gemini API request failed', 'details' => $response->json()]);
         }
 
@@ -80,6 +95,17 @@ class QuizController extends Controller
         foreach ($quizArray as $index => &$question) {
             $question['question_no'] = $index + 1;
         }
+        //store the full response in the database
+        if($quizJson){
+            AIQuiz::create([
+                'user_id' => auth()->id(),
+                'title' =>  $text,
+                'full_response' => $response->json(),
+                'status' => $quizJson ? 1 : 0,
+                'language' => $language ?? 'en',
+            ]);
+        }
+     
 
         return Inertia::render('Quiz/Generate', ['quiz' => $quizArray]);
     }

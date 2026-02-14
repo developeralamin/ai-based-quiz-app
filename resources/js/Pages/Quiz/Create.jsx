@@ -6,6 +6,7 @@ export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
         num_question: "",
         text: "",
+        language: "english",
     });
 
     const [localErrors, setLocalErrors] = useState({});
@@ -65,6 +66,20 @@ export default function Create() {
                                 ))}
                             </select>
                             {errors.num_question && <p className="text-red-500 text-sm mt-1">{errors.num_question}</p>}
+                        </div>
+
+                         <div className="mb-6">
+                            <label className="block text-gray-700 font-medium mb-2">Language</label>
+                            <select
+                                value={data.language}
+                                onChange={(e) => setData("language", e.target.value)}
+                                className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            >
+                                <option value="">Select Language</option>
+                                    <option  value="bangla">Bangla</option>
+                                    <option  value="english">English</option>
+                            </select>
+                            {errors.language && <p className="text-red-500 text-sm mt-1">{errors.language}</p>}
                         </div>
 
                         <button
