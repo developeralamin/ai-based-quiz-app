@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('a_i_quizzes', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->longText('title')->nullable();
             $table->json('full_response'); 
             $table->tinyInteger('status')->default(0); 

@@ -1,25 +1,22 @@
 import {
   ArrowRightOnRectangleIcon,
   BookOpenIcon,
-  CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
   ClockIcon,
   Cog6ToothIcon,
-  DocumentTextIcon,
-  QuestionMarkCircleIcon,
-  SparklesIcon
+  QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 const navLinks = [
   { name: 'Books', href: '/books', icon: BookOpenIcon },
-  { name: 'AI Tools', href: '/ai-tools', icon: SparklesIcon },
+  // { name: 'AI Tools', href: '/ai-tools', icon: SparklesIcon },
   { name: 'History', href: '/history', icon: ClockIcon },
-  { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
-  { name: 'AI Chat', href: '/ai-chat', icon: ChatBubbleLeftRightIcon },
-  { name: 'Study Calendar', href: '/study-calendar', icon: CalendarDaysIcon },
-  { name: 'Question Bank', href: '/question-bank', icon: QuestionMarkCircleIcon },
+  // { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
+  { name: 'AI Quiz', href: '/ai-chat', icon: ChatBubbleLeftRightIcon },
+  // { name: 'Study Calendar', href: '/study-calendar', icon: CalendarDaysIcon },
+  // { name: 'Question Bank', href: '/question-bank', icon: QuestionMarkCircleIcon },
   // { name: 'Question Making', href: '/question-making', icon: PencilSquareIcon },
   { name: 'Quiz', href: '/quiz/form', icon: QuestionMarkCircleIcon },
   // { name: 'Subscription', href: '/subscription', icon: CreditCardIcon },
