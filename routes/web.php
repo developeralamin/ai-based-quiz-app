@@ -49,7 +49,8 @@ Route::middleware('auth')->group(function () {
 
     // AI Chat routes
     Route::get('/ai-chat', [AiChatController::class, 'index'])->name('ai-chat.index');
-
+    Route::get('/ai-chat/details/{id}', [AiChatController::class, 'details'])->name('ai-chat.details');
+   
     // Study Calendar routes
     Route::get('/study-calendar', [StudyCalendarController::class, 'index'])->name('study-calendar.index');
 

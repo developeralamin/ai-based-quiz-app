@@ -89,6 +89,12 @@ export default function Login({ status, canResetPassword }) {
                             Forgot your password?
                         </Link>
                     )}
+                     <Link
+                    href={route('register')}
+                     className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                    Register
+                </Link>
 
                     <PrimaryButton className="ms-4" disabled={processing}>
                         Log in
