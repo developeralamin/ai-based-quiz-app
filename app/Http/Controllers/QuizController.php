@@ -98,6 +98,7 @@ class QuizController extends Controller
         //store the full response in the database
         if($quizJson){
             AIQuiz::create([
+                'user_id' => auth()->id(),
                 'title' =>  $text,
                 'full_response' => $response->json(),
                 'status' => $quizJson ? 1 : 0,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AIQuiz;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,12 +15,29 @@ class AiChatController extends Controller
      */
     public function index(): Response
     {
+        $quizList = AIQuiz::where('user_id', auth()->id())
+            ->where('status', 1)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
         return Inertia::render('AiChat/Index', [
-            'conversations' => [
-                ['id' => 1, 'title' => 'Math Help Session', 'last_message' => 'Can you explain calculus?', 'updated_at' => '2024-01-15'],
-                ['id' => 2, 'title' => 'Physics Questions', 'last_message' => 'What is quantum mechanics?', 'updated_at' => '2024-01-14'],
-                ['id' => 3, 'title' => 'Study Tips', 'last_message' => 'How to improve memory?', 'updated_at' => '2024-01-13'],
-            ]
+            'conversations' => $quizList
         ]);
     }
-} 
+
+    /**
+     * Display the details of a specific AI chat conversation
+     * @param int $id
+     * @return Response
+     */
+    public function details($id): Response
+    {
+        $conversation = AIQuiz::where('user_id', auth()->id())
+            ->where('id', $id)
+            ->firstOrFail();    
+
+        return Inertia::render('AiChat/Details', [
+            'conversation' => $conversation
+        ]);
+    } 
+}
