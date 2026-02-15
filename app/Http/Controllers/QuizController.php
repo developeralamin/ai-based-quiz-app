@@ -61,16 +61,29 @@ class QuizController extends Controller
             {\"type\": \"long-answer\", \"question\": \"Discuss the implications of the events described in the text.\", \"answer\": \"Provide a detailed explanation.\"}
         ]
         Do not include any extra text outside the JSON array.";
-        //Old model
+
+        //open ai model 
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . env('GEMINI_API_KEY'),
+                'Content-Type'  => 'application/json',
+            ])->post('https://api.openai.com/v1/chat/completions', [
+                'model' => 'gpt-4o-mini',
+                'messages' => [
+                    ['role' => 'user', 'content' => $prompt]
+                ],
+            ]);
+
+
+        //Old gemini model - don't remove this
         // $response = Http::withHeaders(['Content-Type' => 'application/json'])
         //     ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey", [
         //         "contents" => [["parts" => [["text" => $prompt]]]]
         //     ]);
-        //new model
-        $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$apiKey", [
-                "contents" => [["parts" => [["text" => $prompt]]]]
-            ]);
+        //new model gemini - don't remove this
+        // $response = Http::withHeaders(['Content-Type' => 'application/json'])
+        //     ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$apiKey", [
+        //         "contents" => [["parts" => [["text" => $prompt]]]]
+        //     ]);
 
  
         if($response->failed()) {
@@ -78,7 +91,8 @@ class QuizController extends Controller
         }
 
         // Extract and process API response
-        $quizJson = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        // $quizJson = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? ''; //gemini response format
+        $quizJson = $response->json()['choices'][0]['message']['content'] ?? ''; //openai response format
         preg_match('/\[[\s\S]*\]/', $quizJson, $matches);
         $cleanJson = $matches[0] ?? '';
         $quizArray = json_decode($cleanJson, true);
