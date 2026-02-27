@@ -11,29 +11,45 @@ function normalize(v) {
 /* ----------------------------------------
    Check if response is correct
 -----------------------------------------*/
+// function isResponseCorrect(resp) {
+//     if (!resp) return false;
+
+//     const user =
+//         resp.user_answer ??
+//         resp.userAnswer ??
+//         resp.answer ??
+//         resp.selected;
+
+//     const correct =
+//         resp.correct_answer ??
+//         resp.correct ??
+//         resp.answer_key ??
+//         resp.key ??
+//         resp.answer;
+
+//     if (user !== undefined && correct !== undefined) {
+//         return normalize(user) === normalize(correct);
+//     }
+
+//     return false;
+// }
+
 function isResponseCorrect(resp) {
-    if (!resp) return false;
 
     const user =
         resp.user_answer ??
         resp.userAnswer ??
-        resp.answer ??
         resp.selected;
 
     const correct =
         resp.correct_answer ??
         resp.correct ??
-        resp.answer_key ??
-        resp.key ??
         resp.answer;
 
-    if (user !== undefined && correct !== undefined) {
-        return normalize(user) === normalize(correct);
-    }
+    if (!user) return false;
 
-    return false;
+    return normalize(user) === normalize(correct);
 }
-
 /* ----------------------------------------
    Safe JSON parser
 -----------------------------------------*/
@@ -59,37 +75,71 @@ function tryParseJSON(text) {
 /* ----------------------------------------
    Extract Gemini quiz array
 -----------------------------------------*/
-function extractResponses(conversation) {
+
+// function extractResponses(conversation) {
+//     if (!conversation) return [];
+
+//     const candidates =
+//         conversation.full_response?.candidates ??
+//         conversation.fullResponse?.candidates ??
+//         conversation.candidates;
+
+//     if (Array.isArray(candidates) && candidates.length > 0) {
+//         const first = candidates[0];
+
+//         const text =
+//             first?.content?.parts?.[0]?.text ??
+//             first?.content?.[0]?.text ??
+//             first?.text ??
+//             first?.message?.content?.parts?.[0]?.text;
+
+//         if (typeof text === 'string') {
+//             const parsed = tryParseJSON(text);
+//             if (parsed) return parsed;
+//         }
+//     }
+
+//     return [];
+// }
+
+//open ai format
+function extractResponsesOpenAi(conversation) {
+
     if (!conversation) return [];
 
-    const candidates =
-        conversation.full_response?.candidates ??
-        conversation.fullResponse?.candidates ??
-        conversation.candidates;
+    const full =
+        conversation.full_response ??
+        conversation.fullResponse ??
+        conversation;
 
-    if (Array.isArray(candidates) && candidates.length > 0) {
-        const first = candidates[0];
+    // already object?
+    let data = full;
 
-        const text =
-            first?.content?.parts?.[0]?.text ??
-            first?.content?.[0]?.text ??
-            first?.text ??
-            first?.message?.content?.parts?.[0]?.text;
-
-        if (typeof text === 'string') {
-            const parsed = tryParseJSON(text);
-            if (parsed) return parsed;
+    if (typeof full === 'string') {
+        try {
+            data = JSON.parse(full);
+        } catch {
+            return [];
         }
     }
 
-    return [];
-}
+    // OpenAI format
+    const text =
+        data?.choices?.[0]?.message?.content ??
+        data?.choices?.[0]?.text;
 
+    if (!text) return [];
+
+    const parsed = tryParseJSON(text);
+
+    return parsed ?? [];
+}
 /* ============================================
    MAIN COMPONENT
 ============================================ */
 export default function Details({ auth, conversation }) {
-    const responses = extractResponses(conversation);
+    // const responses = extractResponses(conversation); // gemini format
+    const responses = extractResponsesOpenAi(conversation); // openai format
     const total = responses.length;
 
     const correctCount = responses.reduce((acc, r) => {
@@ -132,6 +182,7 @@ export default function Details({ auth, conversation }) {
                     {/* Questions */}
                     {responses.length > 0 ? (
                         responses.map((r, qIndex) => {
+                        
                             const question =
                                 r.question ??
                                 r.prompt ??

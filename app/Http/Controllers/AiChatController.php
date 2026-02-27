@@ -35,7 +35,7 @@ class AiChatController extends Controller
         $conversation = AIQuiz::where('user_id', auth()->id())
             ->where('id', $id)
             ->firstOrFail();    
-
+  
         return Inertia::render('AiChat/Details', [
             'conversation' => $conversation
         ]);
