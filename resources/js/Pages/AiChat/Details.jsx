@@ -35,18 +35,23 @@ function normalize(v) {
 // }
 
 function isResponseCorrect(resp) {
-
+    // gather the user's answer from whichever property the data provided
     const user =
         resp.user_answer ??
         resp.userAnswer ??
+        resp.answer ??     // some responses simply put the answer on `answer`
         resp.selected;
 
+    // gather the correct answer, again being liberal about naming
     const correct =
         resp.correct_answer ??
         resp.correct ??
+        resp.answer_key ??
+        resp.key ??
         resp.answer;
 
-    if (!user) return false;
+    // if we have no user answer at all, it's wrong
+    if (user === undefined || user === null) return false;
 
     return normalize(user) === normalize(correct);
 }
@@ -169,14 +174,14 @@ export default function Details({ auth, conversation }) {
                             {conversation.title}
                         </h3>
 
-                        <div className="mt-4 p-4 bg-purple-50 rounded">
+                        {/* <div className="mt-4 p-4 bg-purple-50 rounded">
                             <p className="text-2xl font-semibold text-purple-700">
                                 Your Score: {scorePercent}%
                             </p>
                             <p className="text-sm text-gray-600">
                                 {correctCount} of {total} correct
                             </p>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Questions */}
@@ -203,6 +208,11 @@ export default function Details({ auth, conversation }) {
 
                             const isCorrect = isResponseCorrect(r);
 
+                            const hasUserAnswer =
+                                userAnswer !== undefined &&
+                                userAnswer !== null &&
+                                String(userAnswer).trim() !== '';
+
                             let options = [];
 
                             if (Array.isArray(r.options)) {
@@ -227,54 +237,64 @@ export default function Details({ auth, conversation }) {
 
                                     {/* Multiple Choice / True False */}
                                     {options.length > 0 ? (
-                                        <div className="space-y-3">
-                                            {options.map((opt, idx) => {
-                                                const label = optionLabel(idx);
-                                                const optText =
-                                                    typeof opt === 'string'
-                                                        ? opt
-                                                        : opt.text ?? '';
+                                        <>
+                                            {!hasUserAnswer && (
+                                                <div className="mb-2 text-sm text-red-600">
+                                                    <em>No answer provided.</em>
+                                                </div>
+                                            )}
+                                            <div className="space-y-3">
+                                                {options.map((opt, idx) => {
+                                                    const label = optionLabel(idx);
+                                                    const optText =
+                                                        typeof opt === 'string'
+                                                            ? opt
+                                                            : opt.text ?? '';
 
-                                                const isUserChoice =
-                                                    normalize(userAnswer) ===
-                                                        normalize(label) ||
-                                                    normalize(userAnswer) ===
-                                                        normalize(optText);
+                                                    const isUserChoice =
+                                                        hasUserAnswer &&
+                                                        (normalize(userAnswer) ===
+                                                            normalize(label) ||
+                                                            normalize(userAnswer) ===
+                                                                normalize(optText));
 
-                                                const isOptCorrect =
-                                                    normalize(correctAnswer) ===
-                                                        normalize(label) ||
-                                                    normalize(correctAnswer) ===
-                                                        normalize(optText);
+                                                    const isOptCorrect =
+                                                        normalize(correctAnswer) ===
+                                                            normalize(label) ||
+                                                        normalize(correctAnswer) ===
+                                                            normalize(optText);
 
-                                                return (
-                                                    <div
-                                                        key={idx}
-                                                        className={`border rounded p-3 ${
-                                                            isOptCorrect
-                                                                ? 'bg-green-50 border-green-300'
-                                                                : isUserChoice
-                                                                ? 'bg-purple-200 border-purple-400'
-                                                                : 'bg-white border-gray-200'
-                                                        }`}
-                                                    >
-                                                        <div className="flex gap-3">
-                                                            <div className="font-semibold w-8">
-                                                                {label})
-                                                            </div>
-                                                            <div className="text-sm">
-                                                                {optText}
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className={`border rounded p-3 ${
+                                                                isOptCorrect
+                                                                    ? 'bg-green-50 border-green-300'
+                                                                    : isUserChoice
+                                                                    ? 'bg-purple-200 border-purple-400'
+                                                                    : 'bg-white border-gray-200'
+                                                            }`}
+                                                        >
+                                                            <div className="flex gap-3">
+                                                                <div className="font-semibold w-8">
+                                                                    {label})
+                                                                </div>
+                                                                <div className="text-sm">
+                                                                    {optText}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
                                     ) : (
                                         <div className="text-sm text-gray-700">
                                             <p>
                                                 <strong>Your Answer:</strong>{' '}
-                                                {String(userAnswer ?? '—')}
+                                                {hasUserAnswer
+                                                    ? String(userAnswer)
+                                                    : 'No answer'}
                                             </p>
                                             <p className="mt-2">
                                                 <strong>Correct Answer:</strong>{' '}
