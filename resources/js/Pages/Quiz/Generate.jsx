@@ -269,9 +269,44 @@ return(
 
                     }
 
+                    {/* true-false */}
+
+                    {q.type==="true-false"
+
+                    &&
+
+                    ["true","false"].map((opt,i)=>(
+
+                    <button
+
+                    key={i}
+
+                    onClick={()=>handleAnswerSelect(q.question_no,opt)}
+
+                    disabled={quizFinished}
+
+                    className={`block w-full text-left border p-2 my-1
+
+                    ${userAnswers[q.question_no]
+                    ===opt
+                    ?"bg-purple-600 text-white"
+                    :"bg-gray-100"}
+
+                    `}
+
+                    >
+
+                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+
+                    </button>
+
+                    ))
+
+                    }
+
                     {/* text */}
 
-                    {q.type!=="multiple-choice"
+                    {q.type!=="multiple-choice" && q.type!=="true-false"
 
                     &&
 
