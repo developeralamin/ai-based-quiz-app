@@ -13,29 +13,25 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="h-screen bg-gray-100">
-            {/* Page Header (full width so no gap next to sidebar) */}
+            {/* Fixed Sidebar */}
+            <div className="fixed left-0 top-0 h-full z-30">
+                <Sidebar user={user} headerExists={!!header} onNavClick={() => setSidebarVisible(!sidebarVisible)} />
+            </div>
+
+            {/* Page Header (full width with sidebar offset) */}
             {header && (
-                <header className="bg-white shadow">
+                <header className="bg-white shadow ml-16">
                     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                         {header}
                     </div>
                 </header>
             )}
 
-            {/* Main Content Area with Sidebar */}
-            <div className="flex h-full">
-                {/* Sidebar */}
-                <div className={`transition-all duration-300 ${sidebarVisible ? 'w-64' : 'w-0'} overflow-hidden h-full flex-shrink-0`}>
-                    <div className="h-full">
-                        <Sidebar user={user} headerExists={!!header} onNavClick={() => setSidebarVisible(false)} />
-                    </div>
-                </div>
-
-                {/* Main Content */}
-                <div className={`flex-1 transition-all duration-300 ${sidebarVisible ? 'ml-0' : 'ml-0'} flex flex-col h-full overflow-hidden`}>
-
-                    <main className="flex-1 p-6 overflow-y-auto">{children}</main>
-                </div>
+            {/* Main Content Area */}
+            <div className="ml-16 h-full">
+                <main className="p-6 overflow-y-auto" style={{ height: header ? 'calc(100vh - 120px)' : '100vh' }}>
+                    {children}
+                </main>
             </div>
         </div>
     );

@@ -35,8 +35,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/quiz/form', [QuizController::class, 'quizForm'])->name('quiz.form');
     Route::post('/quiz/generate', [QuizController::class, 'generateQuiz'])->name('quiz.store');
 
+    // Quiz API endpoints
+    Route::post('/api/quiz/submit-answers', [QuizController::class, 'submitAnswers'])->name('quiz.submit-answers');
+    Route::get('/api/quiz/attempt/{attemptId}', [QuizController::class, 'getAttemptDetails'])->name('quiz.attempt-details');
+    Route::get('/api/quiz/history', [QuizController::class, 'getHistory'])->name('quiz.history');
+    Route::get('/api/quiz/dashboard-stats', [QuizController::class, 'getDashboardStats'])->name('quiz.dashboard-stats');
+    Route::get('/api/quiz/list', [QuizController::class, 'getQuizList'])->name('quiz.list');
+
     // Books routes
     Route::get('/books', [BooksController::class, 'index'])->name('books.index');
+    Route::post('/api/books/upload', [BooksController::class, 'store'])->name('books.store');
+    Route::get('/api/books/{bookId}', [BooksController::class, 'show'])->name('books.show');
+    Route::patch('/api/books/{bookId}', [BooksController::class, 'update'])->name('books.update');
+    Route::delete('/api/books/{bookId}', [BooksController::class, 'destroy'])->name('books.destroy');
+    Route::get('/api/books/{bookId}/download', [BooksController::class, 'download'])->name('books.download');
+    Route::get('/api/books/search', [BooksController::class, 'search'])->name('books.search');
+    Route::get('/api/books/categories', [BooksController::class, 'categories'])->name('books.categories');
 
     // AI Tools routes
     Route::get('/ai-tools', [AiToolsController::class, 'index'])->name('ai-tools.index');
@@ -50,7 +64,7 @@ Route::middleware('auth')->group(function () {
     // AI Chat routes
     Route::get('/ai-chat', [AiChatController::class, 'index'])->name('ai-chat.index');
     Route::get('/ai-chat/details/{id}', [AiChatController::class, 'details'])->name('ai-chat.details');
-   
+
     // Study Calendar routes
     Route::get('/study-calendar', [StudyCalendarController::class, 'index'])->name('study-calendar.index');
 

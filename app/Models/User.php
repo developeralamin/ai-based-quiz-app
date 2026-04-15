@@ -45,4 +45,38 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get all quizzes created by this user
+     */
+    public function quizzes()
+    {
+        return $this->hasMany(AIQuiz::class);
+    }
+
+    /**
+     * Get all quiz attempts by this user
+     */
+    public function quizAttempts()
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
+
+    /**
+     * Get dashboard statistics for the user
+     */
+    public function getQuizStats()
+    {
+        $attempts = $this->quizAttempts()->where('status', 'completed')->get();
+
+        return [
+            'total_quizzes_attempted' => $attempts->count(),
+            'total_correct_answers' => $attempts->sum('correct_answers'),
+            'total_wrong_answers' => $attempts->sum('wrong_answers'),
+            'average_score' => $attempts->avg('score'),
+            'best_score' => $attempts->max('score'),
+            'total_questions_answered' => $attempts->sum('total_questions'),
+        ];
+    }
 }
+

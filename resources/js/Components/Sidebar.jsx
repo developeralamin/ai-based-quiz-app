@@ -42,7 +42,7 @@ export default function Sidebar({ user, onNavClick, headerExists = false }) {
 
   return (
     <div
-      className={`flex flex-col h-full sticky ${topOffsetClass} shadow-lg transition-all duration-300 ${expanded ? 'w-64' : 'w-16'} bg-white text-gray-900 group z-20`}
+      className={`flex flex-col h-screen fixed left-0 top-0 shadow-lg transition-all duration-300 ${expanded ? 'w-64' : 'w-16'} bg-white text-gray-900 group z-20`}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => { setExpanded(false); setHovered(null); }}
     >
@@ -102,7 +102,7 @@ export default function Sidebar({ user, onNavClick, headerExists = false }) {
           <a href="#" className={`bg-purple-900 text-xs px-3 py-1 rounded hover:bg-purple-800 transition block text-center text-white ${expanded ? '' : 'hidden'}`}>Your online resume <span className="ml-1">↗</span></a>
         </div>
         {expanded && <div className="text-xs text-purple-400 mb-2">Notification</div>}
-        
+
         {/* Logout Button */}
         <button
           onClick={handleLogout}
@@ -114,4 +114,4 @@ export default function Sidebar({ user, onNavClick, headerExists = false }) {
       </div>
     </div>
   );
-} 
+}
