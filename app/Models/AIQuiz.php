@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AIQuiz extends Model
 {
-    
+
     protected $table = 'a_i_quizzes';
 
     protected $guarded = [];
@@ -49,7 +49,7 @@ class AIQuiz extends Model
             preg_match('/\[[\s\S]*\]/', $text, $matches);
             $cleanJson = $matches[0] ?? '';
             $quizArray = json_decode($cleanJson, true);
-            
+
             if (is_array($quizArray)) {
                 foreach ($quizArray as $index => &$question) {
                     $question['question_no'] = $index + 1;
@@ -97,7 +97,7 @@ class AIQuiz extends Model
         $average = $this->attempts()
             ->where('status', 'completed')
             ->avg('score');
-        
+
         return round($average ?? 0, 2);
     }
 }
