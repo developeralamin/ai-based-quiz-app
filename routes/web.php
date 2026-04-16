@@ -19,6 +19,10 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AdaptiveQuizController;
 
 Route::get('/', function () {
+    return Inertia::render('Homepage');
+});
+
+Route::get('/welcome', function () {
     return Inertia::render('WelcomeEducation', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
