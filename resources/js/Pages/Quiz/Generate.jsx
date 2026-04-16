@@ -1,15 +1,17 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Generate() {
     const { props } = usePage();
     const quizQuestions = props.quiz ?? [];
+    const quizId = props.quizId ?? null;
     const [userAnswers, setUserAnswers] = useState({});
     const [showResults, setShowResults] = useState(false);
     const [error, setError] = useState(props.error || '');
     const [isQuizCompleted, setIsQuizCompleted] = useState(false);
     const [score, setScore] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
 
     const handleAnswerSelect = (questionId, option) => {
@@ -54,16 +56,94 @@ export default function Generate() {
         });
         const calculatedScore = (correctCount / quizQuestions.length) * 100;
         setScore(calculatedScore);
-        return calculatedScore;
+        return { calculatedScore, correctCount };
     };
 
-    const handleShowResults = () => {
-        calculateScore();
+    const handleShowResults = async () => {
+        if (!quizId) {
+            setError('Quiz ID is missing. Please try again.');
+            return;
+        }
+
+        const { calculatedScore, correctCount } = calculateScore();
         setShowResults(true);
         setIsQuizCompleted(true);
+
+        // Save results to the backend
+        setIsSubmitting(true);
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+            if (!csrfToken) {
+                setError('Security error: CSRF token not found. Please refresh the page and try again.');
+                setIsSubmitting(false);
+                return;
+            }
+
+            const response = await fetch('/quiz/submit-result', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    quiz_id: quizId,
+                    user_answers: userAnswers,
+                    quiz_questions: quizQuestions,
+                    score: parseFloat(calculatedScore.toFixed(2)),
+                    correct_count: correctCount,
+                    total_count: quizQuestions.length,
+                }),
+            });
+
+            const contentType = response.headers.get('content-type');
+
+            if (!response.ok) {
+                let errorMessage = 'Failed to save quiz result.';
+
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        const errorData = await response.json();
+                        console.error('Failed to save quiz result:', errorData);
+                        if (errorData.message) {
+                            errorMessage = errorData.message;
+                        }
+                    } catch (e) {
+                        console.error('Could not parse error response:', e);
+                    }
+                } else {
+                    const text = await response.text();
+                    console.error('Server returned non-JSON response:', text.substring(0, 200));
+                    errorMessage = `Server error (${response.status}). Please refresh and try again.`;
+                }
+
+                setError(errorMessage);
+            } else {
+                try {
+                    const successData = await response.json();
+                    console.log('Quiz result saved successfully:', successData);
+                    setTimeout(() => {
+                        router.visit(route('ai-chat.index'));
+                    }, 1500);
+                } catch (e) {
+                    console.error('Could not parse success response:', e);
+                    setError('Quiz submitted, but received an unexpected response. Redirecting...');
+                    setTimeout(() => {
+                        router.visit(route('ai-chat.index'));
+                    }, 2000);
+                }
+            }
+        } catch (err) {
+            console.error('Error submitting quiz result:', err);
+            setError('Network error: ' + err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+
         setTimeout(() => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 100); 
+        }, 100);
     };
 
     return (
@@ -189,11 +269,12 @@ export default function Generate() {
 
                         {!isQuizCompleted && (
                             <div className="text-center mt-8">
-                                <button 
-                                    onClick={handleShowResults} 
-                                    className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200 font-semibold text-lg"
+                                <button
+                                    onClick={handleShowResults}
+                                    disabled={isSubmitting}
+                                    className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Submit Quiz & Show Results
+                                    {isSubmitting ? "Saving..." : "Submit Quiz & Show Results"}
                                 </button>
                             </div>
                         )}

@@ -34,9 +34,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/quiz/form', [QuizController::class, 'quizForm'])->name('quiz.form');
     Route::post('/quiz/generate', [QuizController::class, 'generateQuiz'])->name('quiz.store');
+    Route::post('/quiz/submit-result', [QuizController::class, 'submitQuizResult'])->name('quiz.submit-result');
 
     // Books routes
-    Route::get('/books', [BooksController::class, 'index'])->name('books.index');
+    Route::resource('books', BooksController::class);
 
     // AI Tools routes
     Route::get('/ai-tools', [AiToolsController::class, 'index'])->name('ai-tools.index');
@@ -50,7 +51,7 @@ Route::middleware('auth')->group(function () {
     // AI Chat routes
     Route::get('/ai-chat', [AiChatController::class, 'index'])->name('ai-chat.index');
     Route::get('/ai-chat/details/{id}', [AiChatController::class, 'details'])->name('ai-chat.details');
-   
+
     // Study Calendar routes
     Route::get('/study-calendar', [StudyCalendarController::class, 'index'])->name('study-calendar.index');
 

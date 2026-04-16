@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\QuizResult;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,13 +15,38 @@ class HistoryController extends Controller
      */
     public function index(): Response
     {
+        // Fetch quiz results for the authenticated user
+        $quizResults = QuizResult::where('user_id', auth()->id())
+            ->with(['quiz'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($result) {
+                return [
+                    'id' => $result->id,
+                    'quiz_id' => $result->quiz_id,
+                    'type' => 'quiz',
+                    'title' => $result->quiz->title ?? 'Quiz',
+                    'date' => $result->created_at->format('Y-m-d'),
+                    'score' => round($result->score, 2) . '%',
+                    'correct' => $result->correct_count,
+                    'total' => $result->total_count,
+                ];
+            });
+
+        // Get stats
+        $totalQuizzes = $quizResults->count();
+        $averageScore = $quizResults->isEmpty() ? 0 : $quizResults->avg(function ($r) {
+            return floatval(str_replace('%', '', $r['score']));
+        });
+
         return Inertia::render('History/Index', [
-            'activities' => [
-                ['id' => 1, 'type' => 'quiz', 'title' => 'Completed Math Quiz', 'date' => '2024-01-15', 'score' => '85%'],
-                ['id' => 2, 'type' => 'study', 'title' => 'Studied Physics Chapter 3', 'date' => '2024-01-14', 'duration' => '2 hours'],
-                ['id' => 3, 'type' => 'note', 'title' => 'Created Chemistry Notes', 'date' => '2024-01-13', 'pages' => 5],
-                ['id' => 4, 'type' => 'ai_chat', 'title' => 'AI Chat Session', 'date' => '2024-01-12', 'messages' => 15],
+            'activities' => $quizResults,
+            'stats' => [
+                'totalQuizzes' => $totalQuizzes,
+                'averageScore' => round($averageScore, 2),
+                'studyHours' => 0, // Can be calculated from timestamps if needed
+                'notesCreated' => 0, // Can be fetched from Notes model if available
             ]
         ]);
     }
-} 
+}

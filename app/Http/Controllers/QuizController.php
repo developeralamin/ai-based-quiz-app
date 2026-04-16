@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\AIQuiz;
+use App\Models\QuizResult;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
@@ -47,7 +48,7 @@ class QuizController extends Controller
         $promptPrefix = !empty($numQuestions) ? "Generate exactly $numQuestions " : "Generate a quiz with ";
         $languageInstruction = !empty($language)? "All questions and answers must be written in $language language.\n": "";
         $prompt = $promptPrefix . "
-        multiple-choice, true/false, fill-in-the-gaps, short answer, and long answer questions 
+        multiple-choice and true/false questions
         based on the following text:\n\n$text\n\n" .
 
         $languageInstruction .
@@ -55,12 +56,10 @@ class QuizController extends Controller
         Respond only with a valid JSON array in the following format:
         [
             {\"type\": \"multiple-choice\", \"question\": \"What is the capital of France?\", \"options\": [\"A) Madrid\", \"B) Berlin\", \"C) Paris\", \"D) Rome\"], \"answer\": \"C\"},
-            {\"type\": \"true-false\", \"question\": \"The sun rises in the west.\", \"answer\": \"False\"},
-            {\"type\": \"fill-in-gaps\", \"question\": \"The capital of France is ____.\", \"answer\": \"Paris\"},
-            {\"type\": \"short-answer\", \"question\": \"What is the main idea of the text?\", \"answer\": \"Provide a concise summary.\"},
-            {\"type\": \"long-answer\", \"question\": \"Discuss the implications of the events described in the text.\", \"answer\": \"Provide a detailed explanation.\"}
+            {\"type\": \"true-false\", \"question\": \"The sun rises in the west.\", \"answer\": \"False\"}
         ]
-        Do not include any extra text outside the JSON array.";
+        Do not include any extra text outside the JSON array.
+        Do not generate fill-in-gaps, short-answer, or long-answer questions.\";";
         //Old model
         // $response = Http::withHeaders(['Content-Type' => 'application/json'])
         //     ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey", [
@@ -72,7 +71,7 @@ class QuizController extends Controller
                 "contents" => [["parts" => [["text" => $prompt]]]]
             ]);
 
- 
+
         if($response->failed()) {
             return Inertia::render('Quiz/Generate', ['error' => 'Gemini API request failed', 'details' => $response->json()]);
         }
@@ -96,17 +95,79 @@ class QuizController extends Controller
             $question['question_no'] = $index + 1;
         }
         //store the full response in the database
+        $quizId = null;
         if($quizJson){
-            AIQuiz::create([
+            $quiz = AIQuiz::create([
                 'user_id' => auth()->id(),
                 'title' =>  $text,
                 'full_response' => $response->json(),
                 'status' => $quizJson ? 1 : 0,
                 'language' => $language ?? 'en',
             ]);
+            $quizId = $quiz->id;
         }
-     
 
-        return Inertia::render('Quiz/Generate', ['quiz' => $quizArray]);
+
+        return Inertia::render('Quiz/Generate', ['quiz' => $quizArray, 'quizId' => $quizId]);
+    }
+
+    /**
+     * Store the quiz result with user answers and score
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function submitQuizResult(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'quiz_id' => 'required|integer|exists:a_i_quizzes,id',
+                'user_answers' => 'required|array',
+                'quiz_questions' => 'required|array',
+                'score' => 'required|numeric|min:0|max:100',
+                'correct_count' => 'required|integer|min:0',
+                'total_count' => 'required|integer|min:1',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        }
+
+        try {
+            // Verify the quiz belongs to the authenticated user
+            $quiz = AIQuiz::where('id', $request->quiz_id)
+                ->where('user_id', auth()->id())
+                ->firstOrFail();
+
+            // Create the quiz result
+            $quizResult = QuizResult::create([
+                'user_id' => auth()->id(),
+                'quiz_id' => $validated['quiz_id'],
+                'user_answers' => $validated['user_answers'],
+                'quiz_questions' => $validated['quiz_questions'],
+                'score' => $validated['score'],
+                'correct_count' => $validated['correct_count'],
+                'total_count' => $validated['total_count'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'result_id' => $quizResult->id,
+                'message' => 'Quiz result saved successfully'
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quiz not found or unauthorized'
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Quiz submission error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save quiz result: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AIQuiz;
+use App\Models\QuizResult;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,6 +18,7 @@ class AiChatController extends Controller
     {
         $quizList = AIQuiz::where('user_id', auth()->id())
             ->where('status', 1)
+            ->with('quizResults')
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -32,12 +34,20 @@ class AiChatController extends Controller
      */
     public function details($id): Response
     {
+        // Get the quiz conversation - must exist
         $conversation = AIQuiz::where('user_id', auth()->id())
             ->where('id', $id)
-            ->firstOrFail();    
+            ->firstOrFail();
+
+        // Get the latest quiz result for this quiz (optional)
+        $quizResult = QuizResult::where('user_id', auth()->id())
+            ->where('quiz_id', $id)
+            ->latest()
+            ->first();
 
         return Inertia::render('AiChat/Details', [
-            'conversation' => $conversation
+            'conversation' => $conversation,
+            'quizResult' => $quizResult
         ]);
     } 
 }

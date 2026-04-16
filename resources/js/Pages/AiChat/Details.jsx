@@ -8,96 +8,39 @@ function normalize(v) {
     return String(v).trim().toLowerCase();
 }
 
-/* ----------------------------------------
-   Check if response is correct
------------------------------------------*/
-function isResponseCorrect(resp) {
-    if (!resp) return false;
-
-    const user =
-        resp.user_answer ??
-        resp.userAnswer ??
-        resp.answer ??
-        resp.selected;
-
-    const correct =
-        resp.correct_answer ??
-        resp.correct ??
-        resp.answer_key ??
-        resp.key ??
-        resp.answer;
-
-    if (user !== undefined && correct !== undefined) {
-        return normalize(user) === normalize(correct);
+export default function Details({ auth, conversation, quizResult }) {
+    if (!quizResult) {
+        return (
+            <AuthenticatedLayout user={auth.user} header={<h2 className="font-semibold text-xl text-gray-800">Conversation Details</h2>}>
+                <Head title="Conversation Details" />
+                <div className="py-12">
+                    <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                        <div className="bg-white shadow rounded-lg p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                                {conversation.title && conversation.title.length > 50
+                                    ? conversation.title.substring(0, 50) + '...'
+                                    : conversation.title}
+                            </h3>
+                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                                <p className="text-yellow-800 font-medium">No results yet</p>
+                                <p className="text-yellow-700 text-sm mt-2">
+                                    This quiz hasn't been attempted yet. Please take the quiz to see your results here.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </AuthenticatedLayout>
+        );
     }
 
-    return false;
-}
-
-/* ----------------------------------------
-   Safe JSON parser
------------------------------------------*/
-function tryParseJSON(text) {
-    if (!text || typeof text !== 'string') return null;
-
-    try {
-        return JSON.parse(text);
-    } catch {
-        const start = text.indexOf('[');
-        const end = text.lastIndexOf(']');
-        if (start !== -1 && end !== -1 && end > start) {
-            try {
-                return JSON.parse(text.slice(start, end + 1));
-            } catch {
-                return null;
-            }
-        }
-        return null;
-    }
-}
-
-/* ----------------------------------------
-   Extract Gemini quiz array
------------------------------------------*/
-function extractResponses(conversation) {
-    if (!conversation) return [];
-
-    const candidates =
-        conversation.full_response?.candidates ??
-        conversation.fullResponse?.candidates ??
-        conversation.candidates;
-
-    if (Array.isArray(candidates) && candidates.length > 0) {
-        const first = candidates[0];
-
-        const text =
-            first?.content?.parts?.[0]?.text ??
-            first?.content?.[0]?.text ??
-            first?.text ??
-            first?.message?.content?.parts?.[0]?.text;
-
-        if (typeof text === 'string') {
-            const parsed = tryParseJSON(text);
-            if (parsed) return parsed;
-        }
-    }
-
-    return [];
-}
-
-/* ============================================
-   MAIN COMPONENT
-============================================ */
-export default function Details({ auth, conversation }) {
-    const responses = extractResponses(conversation);
-    const total = responses.length;
-
-    const correctCount = responses.reduce((acc, r) => {
-        return acc + (isResponseCorrect(r) ? 1 : 0);
-    }, 0);
-
-    const scorePercent =
-        total > 0 ? ((correctCount / total) * 100).toFixed(2) : '0.00';
+    const questions = quizResult.quiz_questions || [];
+    const userAnswersMap = quizResult.user_answers || {};
+    const total = questions.length;
+    const correctCount = parseInt(quizResult.correct_count, 10) || 0;
+    const scorePercent = typeof quizResult.score === 'number'
+        ? quizResult.score
+        : parseFloat(quizResult.score) || 0;
 
     return (
         <AuthenticatedLayout
@@ -115,50 +58,35 @@ export default function Details({ auth, conversation }) {
 
                     {/* Score Card */}
                     <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-                        <h3 className="text-lg font-medium">
-                            {conversation.title}
+                        <h3 className="text-lg font-medium truncate">
+                            {conversation.title && conversation.title.length > 50
+                                ? conversation.title.substring(0, 50) + '...'
+                                : conversation.title}
                         </h3>
 
                         <div className="mt-4 p-4 bg-purple-50 rounded">
                             <p className="text-2xl font-semibold text-purple-700">
-                                Your Score: {scorePercent}%
+                                Your Score: {scorePercent.toFixed(2)}%
                             </p>
                             <p className="text-sm text-gray-600">
                                 {correctCount} of {total} correct
                             </p>
                         </div>
+
+                        <div className="mt-4 text-sm text-gray-600">
+                            <p>Submitted: {new Date(quizResult.created_at).toLocaleString()}</p>
+                        </div>
                     </div>
 
                     {/* Questions */}
-                    {responses.length > 0 ? (
-                        responses.map((r, qIndex) => {
-                            const question =
-                                r.question ??
-                                r.prompt ??
-                                `Question ${qIndex + 1}`;
-
-                            const userAnswer =
-                                r.user_answer ??
-                                r.userAnswer ??
-                                r.answer ??
-                                r.selected;
-
-                            const correctAnswer =
-                                r.correct_answer ??
-                                r.correct ??
-                                r.answer;
-
-                            const type = r.type ?? 'short-answer';
-
-                            const isCorrect = isResponseCorrect(r);
-
-                            let options = [];
-
-                            if (Array.isArray(r.options)) {
-                                options = r.options;
-                            } else if (type === 'true-false') {
-                                options = ['True', 'False'];
-                            }
+                    {questions.length > 0 ? (
+                        questions.map((question, qIndex) => {
+                            const questionNo = question.question_no || qIndex + 1;
+                            const userAnswer = userAnswersMap[questionNo];
+                            const correctAnswer = question.answer;
+                            const isCorrect = normalize(userAnswer) === normalize(correctAnswer);
+                            const type = question.type || 'short-answer';
+                            const options = question.options || [];
 
                             return (
                                 <div
@@ -167,10 +95,10 @@ export default function Details({ auth, conversation }) {
                                 >
                                     <div className="mb-4">
                                         <div className="text-sm text-gray-500">
-                                            {qIndex + 1}.
+                                            {questionNo}.
                                         </div>
                                         <div className="text-lg font-medium">
-                                            {question}
+                                            {question.question}
                                         </div>
                                     </div>
 
@@ -179,31 +107,18 @@ export default function Details({ auth, conversation }) {
                                         <div className="space-y-3">
                                             {options.map((opt, idx) => {
                                                 const label = optionLabel(idx);
-                                                const optText =
-                                                    typeof opt === 'string'
-                                                        ? opt
-                                                        : opt.text ?? '';
-
-                                                const isUserChoice =
-                                                    normalize(userAnswer) ===
-                                                        normalize(label) ||
-                                                    normalize(userAnswer) ===
-                                                        normalize(optText);
-
-                                                const isOptCorrect =
-                                                    normalize(correctAnswer) ===
-                                                        normalize(label) ||
-                                                    normalize(correctAnswer) ===
-                                                        normalize(optText);
+                                                const optText = typeof opt === 'string' ? opt : opt.text ?? '';
+                                                const isOptionCorrect = normalize(correctAnswer) === normalize(label) || normalize(correctAnswer) === normalize(optText);
+                                                const isUserChoice = normalize(userAnswer) === normalize(label) || normalize(userAnswer) === normalize(optText);
 
                                                 return (
                                                     <div
                                                         key={idx}
                                                         className={`border rounded p-3 ${
-                                                            isOptCorrect
+                                                            isOptionCorrect
                                                                 ? 'bg-green-50 border-green-300'
-                                                                : isUserChoice
-                                                                ? 'bg-purple-200 border-purple-400'
+                                                                : isUserChoice && !isCorrect
+                                                                ? 'bg-red-50 border-red-300'
                                                                 : 'bg-white border-gray-200'
                                                         }`}
                                                     >
@@ -220,15 +135,19 @@ export default function Details({ auth, conversation }) {
                                             })}
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-gray-700">
+                                        <div className="text-sm text-gray-700 space-y-2">
                                             <p>
                                                 <strong>Your Answer:</strong>{' '}
-                                                {String(userAnswer ?? '—')}
+                                                <span className={isCorrect ? 'text-green-600' : 'text-red-600'}>
+                                                    {String(userAnswer ?? 'Not answered')}
+                                                </span>
                                             </p>
-                                            <p className="mt-2">
-                                                <strong>Correct Answer:</strong>{' '}
-                                                {String(correctAnswer ?? '—')}
-                                            </p>
+                                            {!isCorrect && (
+                                                <p>
+                                                    <strong>Correct Answer:</strong>{' '}
+                                                    <span className="text-green-600">{String(correctAnswer ?? '—')}</span>
+                                                </p>
+                                            )}
                                         </div>
                                     )}
 
@@ -248,7 +167,7 @@ export default function Details({ auth, conversation }) {
                         })
                     ) : (
                         <div className="bg-white shadow rounded-lg p-6">
-                            No quiz responses found.
+                            No quiz questions found.
                         </div>
                     )}
                 </div>
