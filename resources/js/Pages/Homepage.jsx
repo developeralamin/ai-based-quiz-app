@@ -276,7 +276,7 @@ const Homepage = () => {
         <div className="bg-black/40 border border-purple-400/20 rounded-lg p-8">
           <h3 className="text-lg font-semibold mb-4">Smart Auto-Detection</h3>
           <p className="text-gray-300 mb-6">
-            The system automatically detects the language of your input content. If it contains Bengali characters (>10%),
+            The system automatically detects the language of your input content. If it contains Bengali characters (10%),
             Bengali will be auto-selected. You can always override the language selection before generating your quiz.
           </p>
           <div className="bg-purple-900/30 border-l-4 border-purple-400 rounded p-4">
