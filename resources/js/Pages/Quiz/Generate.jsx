@@ -6,6 +6,8 @@ export default function Generate() {
     const { props } = usePage();
     const quizQuestions = props.quiz ?? [];
     const quizId = props.quizId ?? null;
+    const quizData = props.quizData ?? {};
+    const quizTitle = quizData?.title || 'Quiz';
     const [userAnswers, setUserAnswers] = useState({});
     const [showResults, setShowResults] = useState(false);
     const [error, setError] = useState(props.error || '');
@@ -124,13 +126,13 @@ export default function Generate() {
                     const successData = await response.json();
                     console.log('Quiz result saved successfully:', successData);
                     setTimeout(() => {
-                        router.visit(route('ai-chat.index'));
+                        router.visit(route('my-quizzes'));
                     }, 1500);
                 } catch (e) {
                     console.error('Could not parse success response:', e);
                     setError('Quiz submitted, but received an unexpected response. Redirecting...');
                     setTimeout(() => {
-                        router.visit(route('ai-chat.index'));
+                        router.visit(route('my-quizzes'));
                     }, 2000);
                 }
             }
@@ -148,9 +150,20 @@ export default function Generate() {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Quiz Results" />
+            <Head title={`Quiz: ${quizTitle}`} />
             <div className="py-6">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    {/* Back Button and Title */}
+                    <div className="mb-6">
+                        <button
+                            onClick={() => router.back()}
+                            className="text-purple-600 hover:text-purple-800 mb-4 flex items-center gap-2"
+                        >
+                            ← Back
+                        </button>
+                        <h1 className="text-3xl font-bold text-gray-900">{quizTitle}</h1>
+                    </div>
+
                     {error && (
                         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
                             {error}

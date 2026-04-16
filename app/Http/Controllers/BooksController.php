@@ -191,4 +191,21 @@ class BooksController extends Controller
             return redirect()->back()->with('error', 'Failed to delete book: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Get books as JSON (for API)
+     */
+    public function getList()
+    {
+        $userId = Auth::id();
+        $books = Book::where('user_id', $userId)
+            ->select('id', 'title', 'author', 'description', 'cover_image')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'books' => $books
+        ]);
+    }
 }

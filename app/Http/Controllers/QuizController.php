@@ -5,26 +5,39 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\AIQuiz;
 use App\Models\QuizResult;
+use App\Models\Book;
+use App\Models\BookChapter;
+use App\Services\AdvancedQuizGenerationService;
+use App\Services\QuizResultProcessingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\JsonResponse;
 
 class QuizController extends Controller
 {
+    private AdvancedQuizGenerationService $quizGenerationService;
+    private QuizResultProcessingService $resultProcessingService;
+
+    public function __construct(
+        AdvancedQuizGenerationService $quizGenerationService,
+        QuizResultProcessingService $resultProcessingService
+    ) {
+        $this->quizGenerationService = $quizGenerationService;
+        $this->resultProcessingService = $resultProcessingService;
+    }
+
     /**
-     * Summary of quizForm
-     * @return Response|\Inertia\ResponseFactory
+     * Show quiz form
      */
-    public function quizForm()
+    public function quizForm(): Response
     {
         return inertia('Quiz/Create');
     }
 
     /**
-     * Summary of generateQuiz
-     * @param \Illuminate\Http\Request $request
-     * @return Response
+     * Generate quiz (backward compatible with old system)
      */
     public function generateQuiz(Request $request): Response
     {
@@ -60,17 +73,11 @@ class QuizController extends Controller
         ]
         Do not include any extra text outside the JSON array.
         Do not generate fill-in-gaps, short-answer, or long-answer questions.\";";
-        //Old model
-        // $response = Http::withHeaders(['Content-Type' => 'application/json'])
-        //     ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey", [
-        //         "contents" => [["parts" => [["text" => $prompt]]]]
-        //     ]);
-        //new model
+
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=$apiKey", [
                 "contents" => [["parts" => [["text" => $prompt]]]]
             ]);
-
 
         if($response->failed()) {
             return Inertia::render('Quiz/Generate', ['error' => 'Gemini API request failed', 'details' => $response->json()]);
@@ -94,29 +101,109 @@ class QuizController extends Controller
         foreach ($quizArray as $index => &$question) {
             $question['question_no'] = $index + 1;
         }
-        //store the full response in the database
+        //store the quiz in the database
         $quizId = null;
         if($quizJson){
             $quiz = AIQuiz::create([
                 'user_id' => auth()->id(),
                 'title' =>  $text,
-                'full_response' => $response->json(),
+                'full_response' => $quizArray,
                 'status' => $quizJson ? 1 : 0,
                 'language' => $language ?? 'en',
             ]);
             $quizId = $quiz->id;
         }
 
-
         return Inertia::render('Quiz/Generate', ['quiz' => $quizArray, 'quizId' => $quizId]);
     }
 
     /**
-     * Store the quiz result with user answers and score
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Generate advanced quiz
      */
-    public function submitQuizResult(Request $request)
+    public function generateAdvancedQuiz(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'content' => 'nullable|string|min:50',
+            'num_questions' => 'required|integer|min:1|max:50',
+            'difficulty' => 'required|in:easy,medium,hard',
+            'question_type' => 'in:mcq,true-false,short-answer,mixed',
+            'book_id' => 'nullable|integer|exists:books,id',
+            'chapter_id' => 'nullable|integer|exists:book_chapters,id',
+            'topic' => 'nullable|string|max:255',
+            'language' => 'nullable|string|max:10',
+            'save_to_bank' => 'boolean',
+        ]);
+
+        try {
+            // If chapter_id is provided, fetch the chapter content
+            $content = $validated['content'];
+            $chapterId = $validated['chapter_id'] ?? null;
+            $bookId = $validated['book_id'] ?? null;
+            $topic = $validated['topic'] ?? null;
+
+            if ($chapterId) {
+                $chapter = BookChapter::findOrFail($chapterId);
+                $content = $chapter->content;
+                $bookId = $chapter->book_id;
+                $topic = $chapter->title;
+            }
+
+            // Content is required
+            if (!$content || strlen(trim($content)) < 50) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Content must be at least 50 characters long'
+                ], 422);
+            }
+
+            $result = $this->quizGenerationService->generateAdvancedQuiz(
+                content: $content,
+                numQuestions: $validated['num_questions'],
+                difficulty: $validated['difficulty'],
+                questionType: $validated['question_type'] ?? 'mixed',
+                language: $validated['language'] ?? 'en',
+                bookId: $bookId,
+                chapterId: $chapterId,
+                topic: $topic,
+                saveToBank: $validated['save_to_bank'] ?? true
+            );
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Generate quiz from book chapter
+     */
+    public function generateFromChapter(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'chapter_id' => 'required|integer|exists:book_chapters,id',
+            'num_questions' => 'required|integer|min:1|max:50',
+            'difficulty' => 'required|in:easy,medium,hard',
+        ]);
+
+        try {
+            $chapter = BookChapter::findOrFail($validated['chapter_id']);
+
+            $result = $this->quizGenerationService->generateQuizFromChapter(
+                chapter: $chapter,
+                numQuestions: $validated['num_questions'],
+                difficulty: $validated['difficulty']
+            );
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Store the quiz result
+     */
+    public function submitQuizResult(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
@@ -126,35 +213,34 @@ class QuizController extends Controller
                 'score' => 'required|numeric|min:0|max:100',
                 'correct_count' => 'required|integer|min:0',
                 'total_count' => 'required|integer|min:1',
+                'time_taken_seconds' => 'nullable|integer|min:0',
+                'topic' => 'nullable|string',
+                'chapter' => 'nullable|integer',
+                'difficulty_attempted' => 'nullable|in:easy,medium,hard',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-        }
 
-        try {
             // Verify the quiz belongs to the authenticated user
-            $quiz = AIQuiz::where('id', $request->quiz_id)
+            $quiz = AIQuiz::where('id', $validated['quiz_id'])
                 ->where('user_id', auth()->id())
                 ->firstOrFail();
 
-            // Create the quiz result
-            $quizResult = QuizResult::create([
-                'user_id' => auth()->id(),
-                'quiz_id' => $validated['quiz_id'],
-                'user_answers' => $validated['user_answers'],
-                'quiz_questions' => $validated['quiz_questions'],
-                'score' => $validated['score'],
-                'correct_count' => $validated['correct_count'],
-                'total_count' => $validated['total_count'],
-            ]);
+            // Process the result
+            $result = $this->resultProcessingService->processQuizResult(
+                quizId: $validated['quiz_id'],
+                userAnswers: $validated['user_answers'],
+                quizQuestions: $validated['quiz_questions'],
+                timeTakenSeconds: $validated['time_taken_seconds'] ?? null,
+                topic: $validated['topic'] ?? null,
+                chapter: $validated['chapter'] ?? null,
+                difficultyAttempted: $validated['difficulty_attempted'] ?? null
+            );
+
+            $summary = $this->resultProcessingService->getDetailedSummary($result);
 
             return response()->json([
                 'success' => true,
-                'result_id' => $quizResult->id,
+                'result_id' => $result->id,
+                'summary' => $summary,
                 'message' => 'Quiz result saved successfully'
             ], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -169,5 +255,34 @@ class QuizController extends Controller
                 'message' => 'Failed to save quiz result: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Get quiz details with explanations
+     */
+    public function show(AIQuiz $quiz): Response
+    {
+        $this->authorize('view', $quiz);
+
+        return Inertia::render('Quiz/Generate', [
+            'quiz' => $quiz->full_response,
+            'quizId' => $quiz->id,
+            'quizData' => $quiz->load('explanations'),
+        ]);
+    }
+
+    /**
+     * Get quiz result details
+     */
+    public function getResult(QuizResult $result): JsonResponse
+    {
+        $this->authorize('view', $result);
+
+        $summary = $this->resultProcessingService->getDetailedSummary($result);
+
+        return response()->json([
+            'result' => $result->load('quiz'),
+            'summary' => $summary,
+        ]);
     }
 }

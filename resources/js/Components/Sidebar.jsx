@@ -4,22 +4,28 @@ import {
   ChatBubbleLeftRightIcon,
   ClockIcon,
   Cog6ToothIcon,
-  QuestionMarkCircleIcon
+  QuestionMarkCircleIcon,
+  ChartBarIcon,
+  LightBulbIcon,
+  CheckCircleIcon,
+  AdjustmentsHorizontalIcon,
+  DocumentIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 const navLinks = [
+  { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
   { name: 'Books', href: '/books', icon: BookOpenIcon },
-  // { name: 'AI Tools', href: '/ai-tools', icon: SparklesIcon },
+  { name: 'My Quizzes', href: '/my-quizzes', icon: QuestionMarkCircleIcon },
+  { name: 'Quiz Builder', href: '/quiz/form', icon: CheckCircleIcon },
+  { name: 'Adaptive Quiz', href: '/adaptive-quiz-page', icon: AdjustmentsHorizontalIcon },
+  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
+  { name: 'Reading Progress', href: '/reading-progress', icon: DocumentIcon },
+  { name: 'Question Bank', href: '/question-bank', icon: LightBulbIcon },
   { name: 'History', href: '/history', icon: ClockIcon },
-  // { name: 'Notes', href: '/notes', icon: DocumentTextIcon },
-  { name: 'AI Quiz', href: '/ai-chat', icon: ChatBubbleLeftRightIcon },
-  // { name: 'Study Calendar', href: '/study-calendar', icon: CalendarDaysIcon },
-  // { name: 'Question Bank', href: '/question-bank', icon: QuestionMarkCircleIcon },
-  // { name: 'Question Making', href: '/question-making', icon: PencilSquareIcon },
-  { name: 'Quiz', href: '/quiz/form', icon: QuestionMarkCircleIcon },
-  // { name: 'Subscription', href: '/subscription', icon: CreditCardIcon },
+  { name: 'AI Tools', href: '/ai-chat', icon: SparklesIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
 

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { BookOpenIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { BookOpenIcon, ArrowLeftIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 export default function BooksCreate({ auth }) {
   const [preview, setPreview] = useState(null);
+  const [fileError, setFileError] = useState('');
+  const [coverError, setCoverError] = useState('');
   const { data, setData, post, processing, errors } = useForm({
     title: '',
     author: '',
@@ -13,28 +15,93 @@ export default function BooksCreate({ auth }) {
     cover: null,
   });
 
+  const validatePDFFile = (file) => {
+    setFileError('');
+
+    // Check file type
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setFileError('Please upload a valid PDF file');
+      return false;
+    }
+
+    // Check file size (100MB limit)
+    const maxSize = 100 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setFileError('PDF file is too large. Maximum size is 100MB.');
+      return false;
+    }
+
+    // Check minimum file size (PDFs should not be empty)
+    if (file.size < 1024) {
+      setFileError('PDF file appears to be empty or corrupted.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateCoverImage = (file) => {
+    setCoverError('');
+
+    // Check file type
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validImageTypes.includes(file.type)) {
+      setCoverError('Please upload a valid image file (PNG, JPG, GIF, or WebP)');
+      return false;
+    }
+
+    // Check file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setCoverError('Cover image is too large. Maximum size is 5MB.');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setData('file', file);
+      if (validatePDFFile(file)) {
+        setData('file', file);
+      } else {
+        setData('file', null);
+      }
     }
   };
 
   const handleCoverChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setData('cover', file);
-      // Preview cover image
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      if (validateCoverImage(file)) {
+        setData('cover', file);
+        // Preview cover image
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setData('cover', null);
+        setPreview(null);
+      }
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Final validation before submit
+    if (!data.file) {
+      setFileError('PDF file is required');
+      return;
+    }
+
+    if (!validatePDFFile(data.file)) {
+      return;
+    }
+
     post('/books', {
       forceFormData: true,
     });
@@ -116,6 +183,12 @@ export default function BooksCreate({ auth }) {
                   <label htmlFor="file" className="block text-sm font-medium text-gray-700">
                     PDF File *
                   </label>
+                  {fileError && (
+                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                      <ExclamationTriangleIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-red-700 text-sm">{fileError}</p>
+                    </div>
+                  )}
                   <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                     <div className="space-y-1 text-center">
                       <BookOpenIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -129,7 +202,7 @@ export default function BooksCreate({ auth }) {
                             id="file"
                             name="file"
                             type="file"
-                            accept=".pdf"
+                            accept=".pdf,application/pdf"
                             onChange={handleFileChange}
                             className="sr-only"
                           />
@@ -140,7 +213,7 @@ export default function BooksCreate({ auth }) {
                       {data.file && <p className="text-sm text-green-600 mt-2">✓ {data.file.name}</p>}
                     </div>
                   </div>
-                  {errors.file && <span className="text-red-600 text-sm mt-1">{errors.file}</span>}
+                  {errors.file && <span className="text-red-600 text-sm mt-1 block">{errors.file}</span>}
                 </div>
 
                 {/* Cover Image Upload */}
@@ -148,6 +221,12 @@ export default function BooksCreate({ auth }) {
                   <label htmlFor="cover" className="block text-sm font-medium text-gray-700">
                     Cover Image
                   </label>
+                  {coverError && (
+                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                      <ExclamationTriangleIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-red-700 text-sm">{coverError}</p>
+                    </div>
+                  )}
                   <div className="mt-4 flex gap-6">
                     <div className="flex-1">
                       <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
@@ -162,18 +241,18 @@ export default function BooksCreate({ auth }) {
                                 id="cover"
                                 name="cover"
                                 type="file"
-                                accept="image/*"
+                                accept="image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp"
                                 onChange={handleCoverChange}
                                 className="sr-only"
                               />
                             </label>
                             <p className="pl-1">or drag</p>
                           </div>
-                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF, WebP up to 5MB</p>
                           {data.cover && <p className="text-sm text-green-600 mt-2">✓ {data.cover.name}</p>}
                         </div>
                       </div>
-                      {errors.cover && <span className="text-red-600 text-sm mt-1">{errors.cover}</span>}
+                      {errors.cover && <span className="text-red-600 text-sm mt-1 block">{errors.cover}</span>}
                     </div>
 
                     {/* Cover Preview */}

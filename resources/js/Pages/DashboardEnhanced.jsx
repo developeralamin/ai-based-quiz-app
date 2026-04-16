@@ -47,51 +47,24 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Fetch dashboard data
-    fetch('/analytics/dashboard', {
+    fetch('/analytics/stats', {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       }
     })
       .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
       })
-      .then(response => {
-        try {
-          const data = response.data || response;
-          // Transform snake_case to camelCase
-          setStats({
-            totalQuizzes: data.overall_stats?.total_quizzes || 0,
-            averageScore: data.overall_stats?.average_score || 0,
-            booksRead: data.reading_progress?.length || 0,
-            streakDays: 0, // Not provided by API
-            recentQuizzes: (data.recent_quizzes || []).map(quiz => ({
-              title: quiz.quiz?.title || 'Quiz',
-              date: new Date(quiz.created_at).toLocaleDateString(),
-              score: quiz.score || 0,
-            })),
-            topicsPerformance: data.top_topics || [],
-          });
-        } catch (e) {
-          console.error('Error processing response:', e);
-        }
+      .then(data => {
+        setStats(data.data || data || {});
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching stats:', err);
+        setStats({});
         setLoading(false);
-        // Set default values on error
-        setStats({
-          totalQuizzes: 0,
-          averageScore: 0,
-          booksRead: 0,
-          streakDays: 0,
-          recentQuizzes: [],
-          topicsPerformance: [],
-        });
       });
   }, []);
 
